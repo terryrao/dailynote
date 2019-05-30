@@ -1,0 +1,17 @@
+#+BEGIN : indent
+#+TITLE: 一团乱麻？没这回事
+* lynx 下载站网的文本形式，而非 html 形式
+#+BEGIN_SRC sh
+lynx -dump http://google.com > plains.txt
+#+END_SRC
+
+* curl 
+#+BEGIN_SRC sh
+# slient 以静默的方式下载 -O 下载的数据写入文件 
+# --progress 显示进度条，可以用来代替 silent
+curl URL --slient -O new_filename
+# 断点续传 -C offset 偏移量
+curl url/file -C offset 
+curl -C -URL
+
+#+END_SRC

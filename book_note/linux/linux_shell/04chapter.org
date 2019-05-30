@@ -1,0 +1,81 @@
+#+STARTUP: indent
+#+TITLE: 第四章让文本飞
+
+* 1. 正则表达式
+  
+#+CAPTION: 基本组成
+  | 正则表达式   | 描述                        | 示例                  |
+  | \asciicirc{} | 行起始位置                  | ^aux以 aux起始的行    |
+  | \dollar{}    | 行结尾                      | aux$ 以 aux 结尾的行  |
+  | .            | 匹配任意一个字符            |                       |
+  | []           | 在[字符]之中的任意一个字符  |                       |
+  | [^]          | 除[^字符]之外的任意一个字符 |                       |
+  | ?            | 匹配之前的项1次或者0次      |                       |
+  | +            | 至少出现一次                |                       |
+  | \star{}      | 出现0或者多次               |                       |
+  | ()           | 创建一个用于匹配的子串      |                       |
+  | (n)          | 匹配之前的项n次             | [0-9](3)匹配任意e位数 |
+  | (n,)         | 之前的项至少出现n次         |                       |
+  | (n,m)        | 之前项最小和最多出现的次数  |                       |
+  | \vert{}      | 两边任意项                  |                       |
+  | \            | 转义                        |                       |
+  
+ #+CAPTION: POSIX 字符类
+ | 正则表达式 | 描述                           | 示例           |
+ | [:alnum:]  | 字母与数字字符                 | [ [ :alnum:] ] |
+ | [:alpha:]  | 字母字符                       |                |
+ | [:blank:]  | 空格与制表符                   |                |
+ | [:digit:]  | 数字字符                       |                |
+ | [:lower:]  | 小写字母                       |                |
+ | [:upper:]  | 大写字母                       |                |
+ | [:punct:]  | 标点符号                       |                |
+ | [:space:]  | 包括换行符、回车在内的所有字符 |                |
+
+ 示例：
+ - 匹配给定文本的所有单词： ~(?[a-zA-Z]+ ?)~
+ - 匹配 IP 地址: ~[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}
+   
+* grep
+参考 man grep 
+* xargs
+使用 0 值做为结束符
+* 分割文件
+cut 按列分割文件
+#+BEGIN_SRC sh 
+  # cut -f FIELD_LIST filename
+  cut -f 2,3 filename
+#+END_SRC
+
+* sed 可以用来替换文件里的内容
+#+BEGIN_SRC sh
+sed -i 's/text/replace/' file 
+# 移除空行
+sed '/^$/d' file
+#已匹配字符串标记 \w\+ 匹配每一个单词 & 代表之前匹配到的单词
+echo this is an example | sed 's/\w\+/[&]/g'
+# 将 digit 7 替换成 7 \(pattern\) 用于匹配子串 匹配到的第一个子串是\1,第二个是 \2
+echo 'this is digit 7 in a number' | sed 's/digit \([0-9]\)/\1/'
+#+END_SRC
+
+* awk 
+基本结构：
+awk ' BEGIN{ print "start" } pattern { commands } END { print "sed" } file
+
+* 按列合并文件: paste
+
+* 以逆序形式打印行
+
+#+BEGIN_SRC sh
+
+tac file1
+seq 5 | tac
+# 替换变量内容中的部分文本
+var="This is a line of text"
+echo ${var/line/REPLACTRD}
+# 指定字符串长度
+${variable_name: start_posistion:length}
+#+END_SRC
+
+
+
+
