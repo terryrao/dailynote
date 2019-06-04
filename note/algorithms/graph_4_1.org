@@ -1,0 +1,519 @@
+#+TITLE: 算法：图论
+#+DATE:<2019-06-03 Mon>
+
+* 4.1  无向图
+
+** 基本术语
+
+   四种比较重要的图模型:
+    1. 无向图
+    2. 有向图
+    3. 加权图
+    4. 加权有向图
+   图的几种表示方法：
+    1. 邻接矩阵
+    2. 边的数组
+    3. 邻接表数组
+   邻接矩阵占的空间太大 V^2 ，且不能表示平行边。
+   邻接表矩阵的实现性能：
+   - 邻接矩阵使用空间和 V + E 成正比。
+   - 添加一条边所需要的时间为常数
+   - 遍历顶点V的所有相邻顶点所需要的时候和V的度数成正比
+   
+   #+BEGIN_SRC java
+   public class Graph {
+    private int vCount;
+    private int eCount;
+    private LinkedList<Integer>[] adj;
+
+    public Graph(int v) {
+        vCount = v;
+        this.adj = new LinkedList[v];
+        for (int i = 0; i < v; i++) {
+            adj[i] = new LinkedList<>();
+        }
+    }
+
+
+    public Graph(In in) {
+        this(in.readInt());
+        eCount = in.readInt();
+        for (int i = 0; i < eCount; i++) {
+            this.addEdge(in.readInt(),in.readInt());
+        }
+
+    }
+
+    public void addEdge(int v, int e) {
+        adj[v].add(e);
+        adj[e].add(v);
+    }
+
+    public int getvCount() {
+        return vCount;
+    }
+
+    public int geteCount() {
+        return eCount;
+    }
+
+    public LinkedList<Integer> getAdj(int v) {
+        return adj[v];
+    }
+
+    @Override
+    public String toString() {
+        String new_line = "\n";
+        StringBuilder sb = new StringBuilder();
+        sb.append("Vectors: ").append(vCount).append(" ").append("edegs: ").append(vCount).append(new_line);
+        for (int i = 0; i < adj.length; i++) {
+            sb.append("vector ").append(i).append("\t[");
+            for (Integer integer : adj[i]) {
+               sb.append(integer).append(",");
+            }
+            if (sb.charAt(sb.length()-1) ==',') {
+                sb.deleteCharAt(sb.length()-1);
+            }
+            sb.append("]").append(new_line);
+
+        }
+        return sb.toString();
+    }
+
+    public static void main(String[] args) {
+        In in = new In(new File(args[0]));
+        Graph g = new Graph(in);
+        System.out.println(g.toString());
+    }
+}
+   
+   #+END_SRC
+ 
+** 深度优先算法
+
+探索迷宫方法：treamuax 搜索:
+ - 选择一条从来没有走过通道，一路上铺上一条绳子
+ - 标记所有第一次路过的路口和通道
+ - 当你来到一个标记过的路口时（用绳子）回退到上一个路口
+ - 当回退到得路口已经没有可走的通道时继续回退
+绳子可以可以保证总能找到一条出路，标记保证不会两次经过同一条通道或者路口。
+
+#+BEGIN_SRC java
+
+/**
+ * 深度优先算法
+ *
+ * @author raowei
+ * @date 2019-05-30
+ */
+public class DFS {
+    private int count; //深度
+    private boolean[] marked;
+
+    /**
+     * @param graph 图
+     * @param s     起点
+     */
+    public DFS(Graph graph, int s) {
+        marked = new boolean[graph.getvCount()];
+        LinkedList<Integer> adj = graph.getAdj(s);
+        for (Integer integer : adj) {
+            this.dfs(graph, integer);
+        }
+
+    }
+
+    public void dfs(Graph graph, int v) {
+        marked[v] = true;
+        count++;
+        for (Integer integer : graph.getAdj(v)) {
+            if (marked[integer]) {
+                continue;
+            }
+            dfs(graph, integer);
+        }
+    }
+
+
+
+    public boolean isConnected(int v) {
+        return marked[v];
+    }
+
+
+    public static void main(String[] args) {
+        Graph graph = new Graph(new In(args[0]));
+        int start = 0;
+        DFS dfs = new DFS(graph, start);
+        StringBuilder builder = new StringBuilder();
+        builder.append("Vector :  ").append(start).append(" connected : ");
+        for (int i = 0; i < graph.getvCount(); i++) {
+            if (dfs.isConnected(i)) builder.append(i).append(" ");
+        }
+
+        if (graph.getvCount() != dfs.count) {
+            builder.append("\n is not a connect graph");
+        } else {
+            builder.append("\n is a connect graph");
+        }
+        System.out.println(builder);
+    }
+
+
+}
+#+END_SRC
+
+**  广度优先搜索
+单点最短路径：给定一幅图和一个起点S,从Sg到给定顶点V是否存在一条路径？如果有，请找出其中的最短路径。
+算法实现：
+使用队列保存所有已经被标记过但其邻表还未被检查过的顶点。先将起点加入队列，然后重复下面的步骤直到队列为空：
+- 取队列中的下个顶点V并标记它
+- 将与V相邻的所有未被票房的顶点加入队列
+#+BEGIN_SRC java
+
+public class BFS {
+    private boolean[] marked;
+    private int[] edgeTo;
+    private int start;
+
+    public BFS(Graph graph, int start) {
+        this.start = start;
+        this.edgeTo = new int[graph.getvCount()];
+        this.marked = new boolean[graph.getvCount()];
+        this.bfs(graph,start);
+
+
+    }
+
+    private void bfs(Graph graph, int start) {
+        Queue<Integer> queue = new ArrayDeque<>();
+        marked[start] = true;
+        queue.add(start);
+        while (!queue.isEmpty()) {
+            Integer v = queue.poll();
+            LinkedList<Integer> adj = graph.getAdj(v);
+            for (Integer integer : adj) {
+                if (!marked[integer]) {
+                    marked[integer] = true;
+                    edgeTo[integer] = v;
+                    queue.add(integer);
+                }
+            }
+
+        }
+    }
+
+    /** 从起点s到顶点v是否存在通路*/
+    public boolean hasPathTo(int v){return marked[v];}
+    /** 返回从起点s到顶点v的一条最短路径*/
+    public Stack<Integer> pathTo(int v){
+        if(!hasPathTo(v))    return null; // 若不存在到v的路径，返回Null
+        Stack<Integer> path = new Stack<>();
+        for(int x = v; x!=start; x=edgeTo[x])
+            path.push(x);
+        path.push(start);
+        return path;
+    }
+    public static void main(String[] args) {
+        In in = new In(new File(args[0]));
+        Graph g = new Graph(in);
+        int start = 5;
+        BFS bfs = new BFS(g,start);
+        for(int i = 0; i<g.getvCount();i++){
+            if(i == start) continue;
+            if(!bfs.hasPathTo(i)){
+                System.out.println(start + " to "+ i + " : not connected.");
+                continue;
+            }
+            StringBuilder sb = new StringBuilder();
+            sb.append(start + " to "+ i + " : ");
+            Stack<Integer> p = bfs.pathTo(i);
+            while(!p.isEmpty()){
+                sb.append(p.pop() + "->");
+            }
+            sb.deleteCharAt(sb.length() - 1);
+            sb.deleteCharAt(sb.length() - 1);
+            System.out.println(sb.toString());
+        }
+    }
+}
+
+#+END_SRC
+
+命题：对于从S可达到的任意顶点V,广搜都到能找到一条从S到V的最短路径，广搜所需要的时候在最坏的情况下和V+E成正比。
+
+DFS 与BFS 都会先将起点存入数据结构中，然后重复以下步骤直到数据结构被清空：
+ - 取其中的下一个顶点并标记它
+ - 将V的所有相邻而又未被标记的顶点加入数据结构
+DFS 与BFS 的不同之处：从 *数据结构中获取下一个顶点* 的规则：DFS是 *最早加入的顶点* ，BFS是 *最晚加入的顶点*  
+
+** 连接分量
+DFS 的一个应用就是找出一幅图的所有连通分量: API：
+#+BEGIN_SRC java
+public class CC {
+    CC(Graph g); //预处理函数
+    boolean connected(int v,int w);//v 和 w 是否连通
+    int count(); // 连通分量
+    int id(int v);// v所在的连通分量标识符
+}
+
+#+END_SRC
+
+连通分量的 java 实现
+
+#+BEGIN_SRC java
+public class CC {
+    private Graph graph;
+    private boolean[] marked;
+    private int count;
+    private int[] id;
+
+    public CC(Graph graph) {
+        this.graph = graph;
+        int vn = graph.getvCount();
+        id = new int[vn];
+        marked = new boolean[vn];
+        for (int i = 0; i < vn; i++) {
+            if (!marked[i]) {
+                dfs(i);
+                count++;
+            }
+        }
+
+    }
+
+
+    private void dfs(int i) {
+        marked[i] = true;
+        id[i] = count;
+        for (Integer v : graph.getAdj(i)) {
+            if (!marked[v]) {
+                dfs(v);
+            }
+        }
+    }
+
+
+    boolean connected(int v, int w) {
+        return id[v] == id[w];
+    }
+
+    int count() {
+        return count;
+    }
+
+    int id(int v) {
+        return id[v];
+    }
+
+    public static void main(String[] args) {
+        Graph g = new Graph(new In(args[0]));
+        CC cc = new CC(g);
+        int m = cc.count();
+        System.out.println("number of components: "+ m);
+        LinkedList<Integer>[] components = new LinkedList[m];
+        for(int i =0;i<m;i++)
+            components[i] = new LinkedList<>();
+        for(int v = 0; v< g.getvCount(); v++)
+            components[cc.id(v)].add(v);
+        for(int i=0;i<m;i++){
+            for(int v: components[i])
+                System.out.print(v + " ");
+            System.out.println();
+        }
+    }
+}
+
+#+END_SRC
+
+
+与 union-find 算法的对比：
+- union-find 不需要构造一份完整的图，且 union-find 是一种动态算法，DFS 需要预处理。
+- 完成需要判断连通性或者需要完成有大量连通性查询和插入操作混合等类似的任务时。更倾向于使用 union-find，而深搜更适合实现图的抽象数据类型
+** 检测环
+假设没有自环，没有平行边。给定的图是无环的吗？
+思路深搜时候对顶点的下一个连接点，如果是已经标记过的，且这个连接点不等于上一个顶点，代表
+有环，具体实现如下：
+#+BEGIN_SRC java
+public class Cycle {
+    private boolean cycled;
+    private boolean[] marked;
+
+    public Cycle(Graph graph) {
+        marked = new boolean[graph.getvCount()];
+        for (int i = 0; i < graph.getvCount(); i++) {
+            dfs(graph,i,i);
+        }
+    }
+
+    private void dfs(Graph graph, int v, int p)  {
+       marked[v]= true;
+        LinkedList<Integer> adj = graph.getAdj(v);
+        for (Integer verctor : adj) {
+            if (!marked[verctor]) {
+                dfs(graph,verctor,v);
+            }else if (verctor != p) {
+               cycled = true;
+            }
+        }
+    }
+
+    public boolean isCycled() {
+        return cycled;
+    }
+
+    public static void main(String[] args) {
+        Graph graph = new Graph(new In(args[0]));
+
+        Cycle cycle = new Cycle(graph);
+        System.out.println(cycle.isCycled());
+    }
+}
+
+#+END_SRC
+
+** 双色问题解题
+问题描述：能够用两种颜色将图的所有顶点着色，使任一边上两边的顶点的颜色都不一样,该问题等价于判断是否是二分图的问题。java 代码如下：
+#+BEGIN_SRC 
+
+public class TwoColor {
+    private boolean[] marked;
+    private boolean[] color;
+    private boolean isColorable = true;
+
+    public TwoColor(Graph graph) {
+        int v = graph.getvCount();
+        color = new boolean[v];
+        marked = new boolean[v];
+        for (int i = 0; i < v; i++) {
+            dfs(graph,i);
+        }
+    }
+
+
+    private void dfs(Graph graph, int v) {
+        marked[v] = true; // 标记
+        LinkedList<Integer> adj = graph.getAdj(v);
+        for (Integer cv : adj) {
+            if (!marked[cv]) {
+                color[cv] = !color[v];
+            }else if (color[cv] == color[v]) {
+                isColorable = false;
+            }
+        }
+    }
+
+    /** 是否是二分图*/
+    public boolean isBipartite(){return isColorable;}
+
+    public static void main(String[] args) {
+        Graph g  = new Graph(new In(args[0]));
+        TwoColor twoColor = new TwoColor(g);
+        System.out.println(twoColor.isBipartite());
+    }
+}
+
+#+END_SRC
+** 符号表
+一般的应用中，图都是字符而非整数。且有以下特点：
+- 顶点名为字符串
+- 用指定的分隔符来隔开顶点
+- 每一行都代表一组边的集合
+- 顶点总数V和边的总数E都是隐式定义的。
+
+实现思路：将所有的符号映射成整数，然后以整数为索引，保存对应的字符。然后使用整数代表顶点，
+建立图。
+
+#+BEGIN_SRC java
+public class SymboGraph {
+    private Map<String, Integer> revesIndex = new HashMap<>();
+    private String[] keys;
+    private Graph graph;
+
+    public SymboGraph(In in,String splitStr) {
+        String line;
+        int count = 0;
+        List<String> lines = new ArrayList<>();
+        while ((line = in.readLine()) != null) {
+            lines.add(line);
+            String[] split = line.split(splitStr);
+            for (String s : split) {
+                Integer integer = revesIndex.get(s);
+                if (integer == null) {
+                    revesIndex.put(s, count++);
+                }
+            }
+        }
+
+        int size = revesIndex.size();
+        keys = new String[size];
+        for (Map.Entry<String, Integer> entry : revesIndex.entrySet()) {
+            keys[entry.getValue()] = entry.getKey();
+        }
+
+        Graph g = new Graph(size);
+        for (String s : lines) {
+            String[] split = s.split(splitStr);
+            String v = split[0];
+            for (int i = 1; i < split.length; i++) {
+                g.addEdge(revesIndex.get(v),revesIndex.get(split[i]));
+            }
+        }
+
+        this.graph = g;
+
+    }
+
+    public boolean contains(String v) {
+        return revesIndex.containsKey(v);
+    }
+
+    public int index(String v) {
+        return revesIndex.get(v);
+    }
+
+    public String name(int v) {
+        return keys[v];
+    }
+
+    public Graph getGraph() {
+        return this.graph;
+    }
+
+
+    public static void main(String[] args) {
+       SymboGraph sg = new SymboGraph(new In(args[0])," ");
+        Graph g = sg.getGraph();
+        Map<String, Integer> map = sg.revesIndex;
+        for(Map.Entry<String, Integer> s: map.entrySet()){
+            System.out.println(s.getKey() + "-" +s.getValue());
+        }
+        System.out.println(g.toString());
+        String start = "JFK";
+        if(!sg.contains(start)){
+            System.out.println("起点"+start + " 不在数据库.");
+            return;
+        }
+        int s = sg.index(start);
+        BFS bfs = new BFS(g, s);
+        String end = "LAS";
+        if(!sg.contains(end)){
+            System.out.println("终点"+end + " 不在数据库.");
+        }else{
+            int t = sg.index(end);
+            if(!bfs.hasPathTo(t)){
+                System.out.println(start +" 和 " + end + " 没有路径相同.");
+                return;
+            }
+            Stack<Integer> stack = bfs.pathTo(t);
+            StringBuilder sb = new StringBuilder();
+            while(!stack.isEmpty()){
+                sb.append(sg.name(stack.pop())).append(" ");
+            }
+            System.out.println("起点"+start+"到终点"+end+"的路径为:");
+            System.out.println(sb.toString());
+        }
+    }
+}
+
+#+END_SRC
