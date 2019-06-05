@@ -1,5 +1,5 @@
-#+TITLE Docker 简介
-#+DATE <2019-06-05 Wed>
+#+TITLE: Docker 简介
+#+DATE: <2019-06-05 Wed>
 * Dcoker 原理
 ** 命名空间(namespaces)
   namespaces 是 linux 为我们提供的用于分离进程树、网络接口、挂载点及进程间通信的方法。 linux 提供了以下几种不同的命名空间，包括:  ~CLONE_NEWCGROUP~ 、 ~CLONE_NEWIPC~ 、 ~CLONE_NEWNET~ 、 ~CLONE_NEWPID~ 、 ~CLONE_NEWUSER~ 、 ~CLONE_NEWNS~ 、 ~CLONE_NEWUTS~~ 。
