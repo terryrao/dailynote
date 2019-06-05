@@ -1,0 +1,209 @@
+#+TITLE Docker 简介
+#+DATE <2019-06-05 Wed>
+* Dcoker 原理
+** 命名空间(namespaces)
+  namespaces 是 linux 为我们提供的用于分离进程树、网络接口、挂载点及进程间通信的方法。 linux 提供了以下几种不同的命名空间，包括:  ~CLONE_NEWCGROUP~ 、 ~CLONE_NEWIPC~ 、 ~CLONE_NEWNET~ 、 ~CLONE_NEWPID~ 、 ~CLONE_NEWUSER~ 、 ~CLONE_NEWNS~ 、 ~CLONE_NEWUTS~~ 。
+
+*** 进程
+~PID~ 为 1 的进程为 ~/sbin/init~ 和 ~PID~ 为 2 的进程 ~kthreadd~ , 是被 linux 中上帝进程 idle 进程创建出来的。前者负责执行内核的一部分初始化工作和系统配置，也会创建一些类似 ~getty~ 的注册进程，后者负责管理和高度其它内核进程。
+[[2017-11-30-linux-processes.png]]
+
+*** 网络
+Docker 提供了四种不同的网络模式。Host、Container、None、Bridge 模式。
+当有 Deocker 的容器需要将服务暴露给宿主机器，就会为容器分配一个 ip 地址，同时向 iptables 中追加一条新规则
+
+*** 挂载点
+为了防止 container  修改或者访问主机的文件系统，需要创建一个新的根文件系统(rootfs)
+
+*** CGroups
+Control Groups 能隔离物理资源，如 CPU、内存、磁盘I\O和网络宽带，为进程赋予资源
+
+*** UnionFs
+UnionFS 其实是一种为 Linux 操作系统设计的用于把多个文件系统『联合』到同一个挂载点的文件系统服务。Docker 镜像的本质就是一个压缩包
+*** 存储驱动
+Docker 的每一层镜像都是由一系列只读的层构成的， Dockerfile 中的每一个命令都会在已有的只读层上创建新的一层。 当镜像被 ~docker run~ 命令创建时就会在镜像的最上层添加一个可写的层，也就是容器层，所有运行时容器的修改其实都是对于这个容器读写层的修改。
+容器与镜像的区别在于，所有的镜像都是只读的，而每一个窗口实际上是在镜像上加一个可读写的层。因此同一个镜像可以对应多个容器。
+
+*** AUFS
+    AUFS 即 Advanced UnionFS 其实就是 UnionFS 的升级版，它能够提供更优秀的性能和效率。AUFS 作为联合文件系统，它能够将不同文件夹中的层联合到同一个文件夹中。这些文件夹在 AUFS 中称作分支，事个联合的过程被称为联合挂截(union amount)
+
+** 为什么要使用 docker?
+1. 高效的利用系统资源
+2. 更快的启动速度
+3. 一致的运行环境
+4. 持续将会和部署
+5. 迁移更轻松
+6. 更容易维护和扩展
+   
+
+** Docker 基本概念
+- 镜像(image)
+- 容器(container)
+- 仓库(repository)
+- docker registry 存储、分发镜像的服务
+
+
+** CentOS 安装
+#+BEGIN_SRC bash
+# 如果有旧版本的 docker 可以先删除
+sudo yum remove docker docker-common docker-selinux docker engine
+# 安装依赖
+sudo yum install -y yum-utils device-mapper-persistent-data lvm2
+# 使用国内镜像库
+sudo yum-config-manager --add-repo https://mirrors.ustc.edu.cn/docker-ce/linux/centos/docker-ce.resp
+
+#使用最新版本的 dcoker ce
+sudo yum-config-manager --enable docker-ce-edge
+# 测试版本
+sudo yum-config-manager --enable docker-ce-test
+# 安装
+sudo yum makecache fast
+sudo yum install docker-ce
+
+# 启动Dcoker 
+sudo systemctl enable docker
+sudo systemctl start docker
+# 建立用户组
+sudo groupadd docker
+sudo usermod -aG docker $USER
+# 测试是否安装正确
+docker run hello-world
+#+END_SRC
+[[https://docs.docker.com/install/linux/docker-ce/centos/][官方文档: centos 安装 docker]]
+
+** 镜像加速器
+使用 upstart 的系统 编辑 /etc/default/docker，添加：
+#+BEGIN_SRC bash 
+DOCKER_OPTS="--registry-mirror=https://registry.docker-cn.com"
+#+END_SRC
+重启服务 
+#+BEGIN_SRC sh
+sudo service docker restart
+
+#+END_SRC
+对于使用 systemd 的系统，请在 /etc/docker/daemon.json 加入以下内容，如果不存在请新建该文件:
+#+BEGIN_SRC json
+{
+    "registry-mirrors": [
+        "https://registry.docker-cn.com"
+    ]
+}
+
+#+END_SRC
+重启服务：
+#+BEGIN_SRC bash
+systemctl daemon-reload
+sytemctl restart docker
+
+#+END_SRC
+
+** 使用 Docker 镜像
+*** 获取镜像
+#+BEGIN_SRC sh
+docker pull [选项] [Dcoker Registry 地址[:端口号]/]仓库名[:标签]
+# 例如
+docker pull ubuntu:16.04
+#+END_SRC
+*** 运行
+#+BEGIN_SRC sh
+
+docker run -it --rm ubuntu:16.04 bash
+# 使用 nginx 启动一名为 webserver 的容器，并且映射到 80 端口
+docker run --name webserver -d -p 80:80 nginx
+# 更改 docker 文件 ,使用以下命令进入到 bash 中 修改文件 
+docker exec -it webserer bash 
+# 查看改变
+docker diff webserver
+
+
+#+END_SRC
+~it~ 这是两个参数  ~-i~  代表互交式操作 ~-t~ 代表终端 
+~--rm~ 容器退出后随之删除。默认情况下不会立即删除，除非手动 ~docker rm~
+~ubuntu:16.04~ 用 ~ubuntu:16.04~ 镜像为基础来启动容器
+~bash~ ：放在镜像后的是命令
+*** 列出镜像
+#+BEGIN_SRC sh
+# 列出本地镜像
+docker image ls 
+# 查看镜像所占空间
+docker system df 
+# 查看虚悬镜像
+docker image ls -f dangling=true
+# 删除虚悬镜像
+docker image prune
+# 查看中间层镜像
+docker image ls -a 
+# 带格式列出
+docker image ls --format "{{.id}}: {{.Repository}"
+# 删除本地镜像
+docker image rm 【选项】<镜像1> [<镜像2> ...]
+#+END_SRC
+
+*** 利用 commit 理解镜像构成 
+~docker commit~ 不应该做为制作镜像的命令，只用于特殊用途，如黑客入侵现场保留。
+保存容器更改的内容成为镜像：
+#+BEGIN_SRC sh
+docker commit --author "autoor" --message "修改了主页" server nginx:v2
+
+#+END_SRC
+
+
+** 使用 Dockerfile 定制镜像
+定制 nginx :
+#+BEGIN_SRC sh
+mkdir mynginx
+cd mynginx 
+touch Dockerfile
+#+END_SRC 
+内容为: 
+#+BEGIN_SRC docker
+FROM nginx
+RUN echo '<h1>Hello,Docker!</h1>' > /usr/share/nginx/html/index.html
+#+END_SRC
+~FROM~ 指定基础镜像，如果是 ~FROM scratch~ 表示不依赖任何镜像
+~RUN~ 指令是用来执行命令行命令的
+- shell 风格 
+-  exec 格式 
+注意 有多少个 ~RUN~ 就会创建多少层，所以可以使用 ~&&~ 将命令连起来。命令最后需要增加清理命令，删除无关的东西。
+
+执行构建命令
+#+BEGIN_SRC sh 
+docker build -t nginx:v3 .
+
+#+END_SRC
+注意 这个点 ~.~ 是当前上当也是上下文（Context）。 ~Docker boild~ 命令实际上是以远程调用的形式在服务端完成的，不是在本地构建，所以这个时候要让服务端获取本地的文件，就引入了一个上下文的概念。当构建的时候，用户会指定构建镜像上下文的路径。 Docker build 命令获得这个路径后，会将路径下所有的内容打包，然后上传给 Docker 引擎。 Docker 引擎收到这个上下文包后，展开后就会获得构建镜像所需要的文件。
+如果当前目录有不需要上传的文件，可以放在 ~.dockerignore~ 中。
+
+从 *Git repo* 中进行构建
+#+BEGIN_SRC sh
+docker build https://github.com/repo.git#:8.14 
+#+END_SRC
+用给定的 *tar* 压缩包构建
+#+BEGIN_SRC sh
+docker build http://server/context.tar.gz
+#+END_SRC
+从标准输入中读取 *Dockerfile* 
+#+BEGIN_SRC sh
+docker build - < Dockerfile 
+cat Dockerfile | docker build -
+#+END_SRC
+
+*** Dockerfile 指令详解
+
+- copy 复制文件
+- ADD 自动解压到目标路径上
+- CMD 用于指定默认的容器主进程的启动命令
+Docker 没有前台后台的概念 因此以下写法有问题：
+#+BEGIN_SRC Dockerfile
+CMD service nginx start
+#+END_SRC
+这个命令实际上是会转成
+#+BEGIN_SRC Dockerfile
+CMD ["sh","-c","service nginx start"]
+#+END_SRC
+主进程是 ~sh~ 当主进程结束后容器也就退出了，所以正确的作法是:
+直接执行 linux 可执行文件，并且要求以前台形式运行:
+#+BEGIN_SRC Dockerfile
+CMD ["nginx","-g","daemon off;"]
+#+END_SRC
+- ENTRYPOINT 入口点 与 CMD 类似
