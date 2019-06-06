@@ -207,3 +207,55 @@ CMD ["sh","-c","service nginx start"]
 CMD ["nginx","-g","daemon off;"]
 #+END_SRC
 - ENTRYPOINT 入口点 与 CMD 类似
+1. 可以使用 ENTRYPOINT 来代替 CMD 这样就可以在运行时插入命令选项
+2. 应用运行前的准备工作
+- ENV 设置环境变量
+两种格式：
+
+#+BEGIN_SRC 
+ENV <KEY> <VALUE>
+ENV <KEY1>=<VALUE1> <KEY2>=<VALUE2>
+#+END_SRC
+
+- ARG 构建参数
+效果与 ~ENV~ 一致，都是设置环境亦是的 但是与 ~ENV~ 不同的是 ARG 设置的变量在容器运行时就无效了，使用 docker history 可以查看的到。
+
+- VOLUME 定义匿名卷
+Dockerfile
+#+BEGIN_SRC 
+VALUME ["<路径>", "<路径2>"...]
+VALUME <路径>
+# /data 目录就会在运行时自动挂载为匿名卷，任何向 /data 中写入的信息都不会记录进容器存储层，从而保证了容器存储层的无状态。运行时可以覆盖这个挂载位置
+VALUME /data
+
+#+END_SRC
+#+BEGIN_SRC sh
+docker run -d -v mydata:/data xxxx
+#+END_SRC
+
+- EXPOSE 声明端口
+EXPOSE 指令是声明运行时容器提供服务端口的，这只是一个声明，运行时不会因为有这个参数而使用它。要将 ~EXPOSE~ 和在运行时使用 -p <宿主端口>:<容器端口> 区分开来 
+
+- WORKDIR 指定工作目录
+由于每一个 `RUN` 都是一个分层，因此两个 ~RUN~ 之间不共享一个进程，下面的写法是错误的：
+#+BEGIN_SRC Dockerfile
+RUN CD /app
+RUN echo "hello" > world.txt
+#+END_SRC
+第二行会报找不到目录的错误，如果要改变各层的工作目录的位置，需要使用 ~WORKDIR~ 指令。
+- USER 指定当前用户
+~USER~ 能改变之后执行 ~RUN~ ~CMD~ 及 ~ENTRYPOINT~ 这类命令的身份。前提是这些用户必须存在。
+#+BEGIN_SRC Dockerfile
+RUN groupadd -r redis && useradd -r -g redis redis 
+USER redis
+RUN ["redis-server"]
+#+END_SRC
+如果使用 root 执行脚本，在执行期间希望改变身份，不要使用 ~su~ 或者 ~sudo~ ，建议使用 ~gosu~ 。
+#+BEGIN_SRC Dockerfile
+RUN groupadd -r redis && yseradd -r -g redis  redis 
+RUN wget -O /usr/local/bin/gogo "https://github.com/tianon/gosu/releases/download/1.7/gosu-amd64" \
+&& chmod +x /usr/loca/bin/gosu \
+&& gosu nobody true
+CMD ["exec","gosu","redis","redis-server"]
+
+#+END_SRC
