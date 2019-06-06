@@ -1,4 +1,4 @@
-#+TITLE: ABstractQueuedSynchronizer
+#+TITLE: AbstractQueuedSynchronizer
 #+DATE: <2019-06-06 Thu>
 
 * api 文档
@@ -110,7 +110,7 @@ private static class Sync extends AbstractQueuedSynchronizer {
 
 #+END_SRC
 
-下面是一个闩类有点像 ~CountDownLatch~ 除了它只能获阳一个单一的信号来发射。因为一个闩是非独点到的，所以它使用的是共享模式获得和释放方法。
+下面是一个闩类有点像 ~CountDownLatch~ 除了它只能获取一个单一的信号来发射。因为一个闩是非独点到的，所以它使用的是共享模式获得和释放方法。
 #+BEGIN_SRC java
 class BooleanLatch {
 
