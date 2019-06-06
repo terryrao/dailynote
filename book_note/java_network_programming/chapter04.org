@@ -1,0 +1,39 @@
+#+TITLE: 第四章 流
+#+DATE: <2019-06-06 Thu>
+
+java 的 I/O 是建立于流（stream）之上的。输入流读数据，输出流写数据。
+过滤器流可以链接到输入输出流上。一般提供修改数据或者提供额外方法。如 ~DataOutputStream~ 提供了一个方法可以将 int 类型转成四个字节。
+reader 和 writer 允许读写字符而不是字节。
+流是同步的。
+~flush()~ 方法可以强制发送缓存数据，关闭前需要刷新缓存，否则可能会引起数据丢失的问题。
+
+* 输出流
+#+BEGIN_SRC java
+public abstract class OutputStream
+
+#+END_SRC
+write(int) 接收一个范围为 0-255 之间的数据，将对应的字节输出到流中。该参数实际上是一个无符字节，字节只有8个位。如果将 0-255 范围之外的数据传给 write（int），那么将写入此数字的最低字节，其它三个字节将被忽略。
+
+* 输入流
+#+BEGIN_SRC java
+public abstract class InputStream
+
+#+END_SRC
+read() 方法从输入流的源中读取一个字节作为一个 0-255 的 int 返回。流的结束由返回 -1 表示。read 是同步方法。
+考虑到读取字节可能只有部分成功，可以使用以下方法来填充缓存数据
+#+BEGIN_SRC java
+int bytesRead = 0;
+int bytesToRead = 1024;
+byte[] intput = new byte[bytesToRead];
+while(byteRead < bytesToRead) {
+    int result = in.read(input,bytesRead,bytesToRead - bytesRead);
+    if(result == -1) {
+        break;
+    }
+    bytesRead += result;
+}
+
+#+END_SRC 
+
+* 过虑器流
+过滤器流可以置于原始流（如 FileInputStream）或者其它过滤器流之上，但是不能放在 reader 和 writer 上，而 reader 和 wirter 可以放在过滤器流上。

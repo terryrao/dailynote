@@ -1,0 +1,69 @@
+#+TITLE: 第三章基本 Web 概念
+#+DATE: <2019-06-05 Wed>
+
+* URI
+URI(Uniform Resource Identifier 统一资源标识符)是以特定语法标识一个资源的字符串。绝对 URI 由 URI 模式(scheme) 和模式特有的部分构成。模式与特有部分之间用冒号隔开，例如：
+
+~scheme:scheme-specific-par~ 
+
+当前模式包括： 
+| 模式   | 描述                                        |
+| data   | 链接中直接包括的 Base64 编码的数据 RFC 2397 |
+| file   | 本地磁盘上的文件                            |
+| ftp    | ftp服务器                                   |
+| http   |                                             |
+| gopher | Gopher 服务器                               |
+| mailto | 电子邮件地址                                |
+| new    | Usenet 新闻组                               |
+| telnet | 与基于 Telnet 的服务的连接                  |
+| urn    | 统一资源名                                  |
+
+
+* URN
+有两种类型的 URI : URL 和 URN 。 URL 是指向 Internet 上位于某个位置的某个资源。URN 的目标是处理映射许多不同位置或者已经从一个网站移动到另一个网站的资源。它们用资源本身标识，而不是由资源所在的位置。例如：当给出某个软件的 URN 时，FTP 程序就可以从最近的镜像网站获取此类文件。
+
+* URL
+语法： 
+~protocol://username@hostname:port/path/filename?query#fragment~ 
+
+
+* Http
+Http 请求行
+#+BEGIN_SRC http
+GET /index.html HTTP/1.0
+Accept: text/html, text/plain,image/gif image/jpeg
+User-Agent: Lynx/2.4 libwww/2.1.4
+
+#+END_SRC
+不管客户端或者服务器平台上以何种方式结束一行，请求都以两个回车/换行对（java 中以 \r\n\r\n）结束。
+
+响应
+#+BEGIN_SRC http
+HTTP/1.1 200 OK
+Date: Mon, 15 Sep 2004 21:56:13 GMT
+Server: Apache/2.0.40 (Red Hat Linux)
+Last-Modified: Tue, 15 Apr 2003 17:28:57 GMT
+Connection: close
+Content-Type: text/html; charset=iso8859-1
+Content-length: 107
+
+<html>
+<head>
+<title>A Sample HTML file
+</title>
+</head>
+<body> The rest of the document goes here
+</body>
+</html>
+#+END_SRC
+MIME 类型以 x- 开头的一般是非标准类型。
+
+POST 的请求会发送正常的首部。后面是一个空行，然后发送查询字符串：
+#+BEGIN_SRC http
+POST /cgi-bin/register.pl HTTP 1.0
+Content-type: application/x-www-form-urlencoded
+Content-length: 65
+
+username=Elliotte+Harold&email=elharo&
+
+#+END_SRC
