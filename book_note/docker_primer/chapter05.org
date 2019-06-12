@@ -1,0 +1,81 @@
+#+TITLE: 使用网络
+#+DATE: <2019-06-12 Wed>
+
+* 外部访问容器
+
+当使用 ~-P~ 标记时，Docker 会随机映射一个 49000~49900的端口到内部容器开放的网络端口。
+#+BEGIN_SRC sh
+docker run -d -P training/webapp python app.py
+docker ps -l
+# 查看应用信息
+docker logs -f containerId
+
+#+END_SRC
+
+**  映射所有有接口地址
+使用 ~hostPort:containerPort~ 指定端口。
+#+BEGIN_SRC sh
+docker run -d -p 5000:5000 training/webapp python app.py
+
+#+END_SRC
+** 映射到指定地址的指定端口
+格式： ~ip:hostPort:containerPort~  
+#+BEGIN_SRC sh
+docker run -d -p 5000:5000 training/webapp python app.py
+
+#+END_SRC
+** 映射指定地址的任意端口
+格式： ~ip::containPort~ 
+#+BEGIN_SRC sh
+docker run -d -p 127.0.0.1::5000 training/webapp python app.py
+
+#+END_SRC
+** 指定 upd 端口
+
+#+BEGIN_SRC sh
+docker run -d -p 127.0.o.1:5000:5000/udp training/webapp python app,py
+#+END_SRC
+** 查看映射端口的配置
+#+BEGIN_SRC sh
+docker port containerId 5000
+
+#+END_SRC
+** 多次绑定接口
+#+BEGIN_SRC sh
+docker run -d -p 5000:5000 -p 3000:80 training/webapp python app.py
+#+END_SRC
+
+* 容器互联
+
+创建一个 docker 网络
+#+BEGIN_SRC sh
+# 容器指定网络类型 -d  bridge, overlay
+docker network create -d bridge my-net 
+#+END_SRC
+** 连接容器
+#+BEGIN_SRC sh
+docker run -it --rm --name busybox1 --network my-net busybox sh
+docker run -it --rm --name busybox2 --network my-net busybox sh
+# 在 busybox1 中
+ping busybox2
+# 在busybox2 中
+ping busybox1
+#+END_SRC
+两都能相互 ping 通
+
+** Docker Compose
+多个容器互联使用[[Docker Compose][https://docs.docker.com/compose/]]
+
+* 配置 DNS
+修改 ~/etc/docker/daemon.json~ 文件:
+#+BEGIN_SRC json
+{
+    "dns": [
+         "114.114.114.114",
+         "8.8.8.8" 
+     ]
+}
+
+#+END_SRC
+
+

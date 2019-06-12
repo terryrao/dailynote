@@ -1,0 +1,74 @@
+#+TITLE: 操作容器
+#+DATE: <2019-06-12 Wed>
+
+* 新建并启动容器
+
+命令主要为： ~docker run~
+#+BEGIN_SRC sh
+docker run ubbuntu:14.04 /bin/echo 'hello world'
+#+END_SRC
+启动终端
+#+BEGIN_SRC sh
+# -t 选项让 Dcoker 分配一个伪终端 pseudo-tty 并绑定到Docker标准输出上
+# -i 让窗口的标准输入操持打开。
+docker run -t -i ubuntu /bin/bash
+#+END_SRC
+启动已终止容器： ~docker container start~ 可以启动一个已终止的容器
+
+* 后台运行
+添加参数 ~d~ 可以让容器后台运行
+#+BEGIN_SRC sh
+docker run -d  ubuntu /bin/sh -c "while true; do echo hello world ; sleep 1 ; done"
+# 此时会返回一个字符串 通过此字符串使用 以下命令查看输出
+docker container logs [container ID or names ]
+
+#+END_SRC
+
+* 终止容器
+命令 ~docker container stop~
+
+* 进入容器
+命令: ~docker attach~ 
+#+BEGIN_SRC sh
+# 后台启动一个 ubuntu 实例
+ docker run -dit ubuntu
+
+# containerId 为上个命令返回一字符串
+docker attach containerId
+# 注意此时进入后不能使用 exit 退出，否则会使容器退出
+#+END_SRC
+
+* exec 命令
+
+#+BEGIN_SRC sh
+docker exec -it containerId bash 
+# exec 中 exit 退出不会终止容器
+
+#+END_SRC
+
+* 导出窗口
+
+命令 : ~docker export~
+
+#+BEGIN_SRC sh
+# 找出要导出的容器的 id
+docker ps -a 
+
+#导出容器
+docker export contianerId > ubuntu.tar
+#+END_SRC
+
+* 导入容器快照
+导入命令： ~docker import~ 
+#+BEGIN_SRC sh 
+cat ubuntu.tar | docker import - test/ubuntu:v1.0
+
+#+END_SRC
+
+* 删除容器
+命令: ~docker container rm~ 
+
+* 清理所有牌终止状态的容器
+#+BEGIN_SRC sh
+docker container prune 
+#+END_SRC

@@ -1,0 +1,52 @@
+#+TITLE: 访问仓库
+#+DATE: <2019-06-12 Wed>
+
+* Docker Hub 
+官网公共仓库
+** 登录
+可以使用命令行进行登录 ~docker login~
+退出 ~docker logout~ 
+查找镜像： ~docker search~ 
+拉取: ~docker pull~
+推送镜像： ~docker tag ubuntu:version username/ubuntu:version~ 
+
+* 私有仓库
+
+~docker-registry~ 是官方提供的一个工具，可以构建私有的镜像仓库。
+
+** 安装 registry
+
+#+BEGIN_SRC sh
+docker run -d -p 5000:5000 --restart=always --name registry registry 
+
+#+END_SRC
+
+** 私有仓库的上传、搜索、下载镜像
+例如：使用 ~doker tag~ 将 ~ubuntu:latest~ 这个镜像标记为 ~127.0.0.1:5000/ubuntu:latest~ 
+通用格式为 ~docker tag IMAGE[:TAG] [REGISTRY_HOST[:REGISTRY_PORT]/]REPOSITORY[:TAG]~ 
+
+#+BEGIN_SRC sh
+docker tag ubuntu:latest 127.0.0.1:5000/ubuntu:latest
+# 使用 docker push 上传标记的镜像
+docker push 127.0.0.1:5000/ubuntu:latest
+# 删除镜像 
+docker image rm 127.0.0.1:5000/ubuntu:latest
+
+#+END_SRC
+如果要使用其它主机做为私有仓库，需要修改配置文件，因为 docker 是默认不允许非 https 方式推送镜像的。
+对于 ubuntu 之类的 ~upsart~ 系统而言，在 ~/etc/default/docker~ 文件中增加一行
+#+BEGIN_SRC properites
+DOCKER_OPTS="--registry-mirror=https://registry.docker-cn.com --insecure-registries=192.168.11.111:5000"
+#+END_SRC
+对于 ~systemd~ 的系统，请在 ~/etc/docker/daemon.json~ 中写入以下内容：
+#+BEGIN_SRC json
+{
+"registry-mirror":[
+    "https://registry.docker-cn.com"
+],
+"insecure-registries": [
+    "192.168.11.111:5000"
+]
+}
+
+#+END_SRC

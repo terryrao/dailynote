@@ -1,0 +1,9 @@
+#+TITLE: 查找Internet 地上
+#+DATE:<2019-06-08 Sat> 
+* InetAddress 对象
+
+创建 InetAddress 对象的时候，该类会连接到 DNS 服务器，查询 IP  地址。由于 DNS 查询成本比较高，所以查询完后就会将结果缓存。
+任意 DNS 查找会泄漏信息，所以要禁止任意 DNS 查找。
+
+* NetWorkInterface 
+代表一个IP地址，一个物理接口等。
