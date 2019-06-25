@@ -1,0 +1,37 @@
+#+TITLE: 核心技术
+IoC is also known as dependency injection (DI). It is a process whereby objects define their dependencies, that is, the other objects they work with, only through constructor arguments, arguments to a factory method, or properties that are set on the object instance after it is constructed or returned from a factory method. The container then injects those dependencies when it creates the bean. This process is fundamentally the inverse, hence the name Inversion of Control (IoC), of the bean itself controlling the instantiation or location of its dependencies by using direct construction of classes, or a mechanism such as the Service Locator pattern.
+* 1. IOC容器
+*org.springframework.beans* 和 *org.springframework.context* 是 spring framework 的 IOC 容器的基础包。 ~BeanFactory~ 管理各种类型的对象的接口， ~ApplicationContext~ 是 ~BeanFactory~ 的子接口，它可以更容易的与 Spring AOP, 消息资源处理、事件发布等功能集成.
+** 1.2 容器概览
+ApplicationContext 代表着 Sprinng 的 IOC 容器，并且对实例化、配置和组装前述 Bean 做出反应。容器读取配置元数据去配置、组装、实例化对象。配置元数据可以是 Xml、java 注解、 或者 java 代码。ApplicationContext 有好几个开箱即用的实现，在一个单独的应用里，通常会创建 ~ClassPathXmlApplicationContext~ 或者 ~FileSystemXmlApplicationContext~ 对象。 
+Spring 配置至少有一个及以上的 Bean 定义组成。xml 风格的配置会放在<beans>下面的<bean>标签里配置。java 代码配置一般会有标有 ~@Congfiguration~ 类里，使用 ~@bean~ 标记方法。
+
+** 1.3 Bean 概览
+
+*** 1.3.2 实例化 Bean
+
+bean 实例化的两方法
+- 指定类的构造器，相当于new 
+- 指定一个工厂方法
+#+BEGIN_SRC xml
+<bean id="clientService"
+    class="examples.ClientService"
+    factory-method="createInstance"/>
+
+#+END_SRC
+如果是静态内部类需要指明内部类的二进制名称如 ~com.example.Outer$Inner~ 
+如何选择 Constructor-based 和 setter-based DI?
+通常：如果是强制依赖，则使用前者，如果是可选依赖，则使用后者。spring 团队提倡使用 contructor-based 的方式，因为它可以让应用组件(appocation componets) 作为一个不变对象来保证需要的依赖不为空。更进一步说，构造器注入的组件总是会返回给客户端一个完全初始化好的状态。副作用是过多的构造器参数是 bad code smell 。
+Setter 注入应该仅用于可选的依赖，且有合理的默认值。
+
+依赖解决过程 
+
+- ApplicationContext 被创建，初始化 bean 的所有的配置元信息。
+- For each bean, its dependencies are expressed in the form of properties, constructor arguments, or arguments to the static-factory method if you are using that instead of a normal constructor. These dependencies are provided to the bean, when the bean is actually created.
+- Each property or constructor argument is an actual definition of the value to set, or a reference to another bean in the container.
+- Each property or constructor argument which is a value is converted from its specified format to the actual type of that property or constructor argument. By default Spring can convert a value supplied in string format to all built-in types, such as int, long, String, boolean, etc.
+
+Spring 容器创建时会验证每一个 bean 的配置，但是这些bean的属性并不会被立即设置，直到 beaan 真正被创建。 被设置成 singleton-scoped 和 pre-instantiated（默认值是这个）的会在容器创建时被创建。 Scopes 定义在 Bean Scope 中，其它情况下只有当这个类被使用的时候才会被创建。创建 bean 会潜在地创建许多 bean。
+
+Circular Dependencies
+大量的构造器依赖可能会产生循环依赖，抛出 ~BeanCurrentlyInCreationException~ 异常。解决方法，把部分构造器注入变为 setter 注入。
