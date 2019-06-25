@@ -1,0 +1,259 @@
+#+TITLE: Awk 语言
+#+DATE: <2019-06-24 Mon>
+
+最简单的 awk 程序是一个由多个模式-动作的语句构成的序列 
+#+BEGIN_SRC 
+pattern { action }
+pattern { action }
+...
+#+END_SRC
+** 模式
+1. BEGIN{ statements }
+   在输入被读取之前, statemtnes 执行一次
+2. END { statements }
+   当所有输入被读取完毕之后, statements 执行一次
+3. expression { statements } 
+   每碰一一个使 expression 为真的输入行，Statments 就执行，expression 为真的条件是值为 *非零* 或者非空
+4. /regular expression/ { statements } 
+   当碰到这样一个输入行时， statements 就执行，输入行含有一段字符串，而该字符串可以被 regular expressions 匹配
+5. compound pattern { statemetns }
+   一个复合模式将表达式用 &&(AA), ||(OR), !(NOT)，以及括号组合起来； 当 compound pattern 为真时，statements 执行。
+6. pattern1,pattern2 { statements }
+   一个范围模式匹配多个倒入行，这些输入行从匹配 pattern1 的行开始，到匹配 pattern2 的行结束，对其中的每一行执行 statements 。
+
+BEGIN 与  END 不与其它模式组合，一个范围模式不能是其它模式的一部分。
+
+分割符是由内建变量 ~FS~ 控制。默认情况下是空格或者制表符。
+#+BEGIN_SRC sh
+# print countries with column header and totals
+BEGIN { FS = "\t" # make tab the  field separator 
+    printf("%10s %6s %5s %s\n\n","COUNTRY","AREA","POP","CONTITENT")
+}
+{
+   printf("%10s %6d %5d  %s\n",$1,$2,$3,$4)
+   area = area + $2
+   pop = pop + $3
+}
+
+END {printf("\n%10s %6d %5d\n ","total" ,area, ppp)}
+#+END_SRC
+
+常用的匹配模式：
+#+BEGIN_SRC 
+/^[0-9]+$/
+匹配含有且只含有数字的输入行.
+
+ /^[0-9][0-9][0-9]$/
+输入行有且仅有 3 个数字.
+
+ /^(\+|-)?[0-9]+\.?[0-9]*$/
+十进制小数, 符号与小数部分是可选的.
+
+ /^[+-]?[0-9]+[.]?[0-9]*$/
+也是匹配十进制小数, 带有可选的符号与小数部分.
+
+ /^[+-]?([0-9]+[.]?[0-9]*|[.][0-9]+)([eE][+-]?[0-9]+)?$/
+浮点数, 符号与指数部分是可选的.
+
+ /^[A-Za-z][A-Za-z0-9]*$/
+一个字母, 后面再跟着任意多个字母或数字 (比如 awk 的变量名).
+
+/^[A-Za-z]$|^[A-Za-z][0-9]$/
+一个字母, 又或者是一个后面跟着一个数字的字母 (比如 Basic 的变量名).
+
+ /^[A-Za-z][0-9]?$/
+同样是一个字母, 又或者是一个后面跟着一个数字的字母.
+
+#+END_SRC
+
+String as Regular Expressions 
+Awk  会对表达示求值，如果必要的话会将表达式转成字符串，再将这些字符串解释成正则表达示。
+#+BEGIN_SRC awk
+BEGIN { digits = "^[0-9]+$"}
+$2 ~ digits
+
+BEGIN { sign = "[+-]?"
+        decimal = "[0-9]+[.]?[0-9]*"
+        fraction = "[.][0-9]+"
+        exponent = "([eE]" sign "[0-9]+)?"
+        number = "^" sign "(" decimal "|" fraction ")" exponent "$"
+}
+
+$0 ~ number
+#+END_SRC
+
+内建字符串函数 index(s,t)
+#+BEGIN_SRC sh 
+index("banana","an")
+# 返回2
+#+END_SRC
+
+sub(r,s,t) 目标字符串 t 中找到能被 r 匹配的最左最长子串, 再将这个子串替换为 s. 在 ed 中, “最左 最长” 意味着先找到最左边的匹配, 然后尽可能的延长匹配的长度。
+gsub(r,s,t)全局替换
+
+#+BEGIN_SRC awk
+
+{gsub(/USA/,"United States"); print}
+
+#+END_SRC
+
+两种惯用语法可以将表达式从一种类型转到另一种类型
+number "" 将空字符串拼接到 number 可以将它强制转换成字符串;
+string + 0 给字符串加上零可以把它强制转换成数值.
+
+** 流程控制语句
+#+BEGIN_SRC  awk 
+if (expression) 
+    statements1
+else 
+    statements2
+
+#+END_SRC
+如果 if-else 在同一行，那么 statements1 后面必须带 ; 如果有多个 if ，else 只匹配 最近的一个 if 
+其它控制流程语句：
+1. while(expression) statements 
+2. for(expression1; expressions2:expressions3) statements
+3. for(variable in array) statements
+4. do statements while(expressions)
+5. break 跳出循环
+6. continue 中止当前循环进入下一次循环
+7. next 开始输入主循环的下一次迭代
+8. exit 或者 exit expression 马上执行 END 动作，如果已经在 END 中，则退出程序，将 expression 作为程序的退出状态返回
+
+** 空语句
+#+BEGIN_SRC awk
+BEGIN { FS = "\t"}
+      { for (i = 0 ; i <= NF && $i != ""; i++)
+           ;
+           if (i <= NF) 
+               print 
+}
+#+END_SRC
+
+** 数组
+awk 的数组是动态的，初始变量为 0 或者 空字符串 ""
+#+BEGIN_SRC awk
+# 倒序打印
+{x[NR] = $0}
+END {for(i = NR; i > 0 ; i--) print x[i]}
+
+#+END_SRC
+awk 的数组下标是字符串，因此又可以称为关联数组(associative arrays)。
+#+BEGIN_SRC awk
+/Asia/ {pop["Asia"] += $3}
+/Europe/ {pop["Europe"] += $3}
+END {print "Asia population is ", pop["Asia"], "million ." 
+     print "European population is ", pop["Europe"],"million. "}
+
+
+# 计算大陆总人口
+BEGIN {FS = "\t"}
+      {pop[$4] += $3}
+END {for (name in pop) 
+     print name,pop[name]
+}
+#+END_SRC
+判断某个下标是否在 数组 A 中：
+#+BEGIN_SRC awk
+  subscript in A
+  if("Africa" in pop)
+# 下面语句会有副作用，会产生一个新元素,上面的不会
+if(pop["Africa"] != "") 
+#+END_SRC
+
+delete 
+#+BEGIN_SRC awk
+delete array[subscript] 
+
+#+END_SRC
+
+split 分割函数并存放在数组中：
+#+BEGIN_SRC awk
+# 将字符串分割后存放在 arra 中
+split("7/4/76",arra, "/")
+#+END_SRC
+模拟多维数组(Multidimenisional Array)
+#+BEGIN_SRC awk 
+# 其实下标是以字符串的形式存储的
+for (i = 1; i <= 10; i++)
+        for (j = 1; j <= 10; j++)
+            arr[i, j] = 0
+# 必须使用 () 括起来
+if((i,j) in arr)
+#+END_SRC
+
+
+** 自定义函数
+#+BEGIN_SRC awk
+
+function name(paramenter-list) {
+statemtnes
+}
+#+END_SRC
+
+** 2.4 输出
+1. print 打印 $0
+2. print expression,expression,... 打 OFS 分开打印
+3. print expression,expression,... > filename
+4. print expression,expression,... >> filename 追加
+5. print expression,expression,... | command 输出作为命令 command 标准输入
+6. printf(format,expression,expression,...)
+7. printf(format,expression,expression,...) > filaname
+8. printf(format,expression,expression,...) >> filename
+9. printf(format,expression,expression,...) | command 
+10. close(filename),close(command) 断开 print 与 filename 和 command 之间的连接
+11. system(command)执行 command; 函数的返回值是 command 的退出状态
+** 2.5 输入
+#+BEGIN_SRC awk
+awk 'program' data
+command | awk 'program'
+#+END_SRC
+*** 输入分割符
+#+BEGIN_SRC awk
+BEGIN {FS = ",[ \t]*|[ \t]+"}
+#+END_SRC
+*** 多行记录
+行记录内建分隔符  RS
+
+*** getline 函数
+
+*** 命令行变量赋值
+awk 'program' f1 f2 ...
+awk -f profile f1 f2 ...
+awk -Fsep 'program' f1 f2 ...
+awk -Fsep -f progfile f1 f2 ...
+f1,f2 通常代表文件名， 如果是 var=text，那就表示赋值语句，把text赋值给var。
+
+*** 命令行参数
+命令行参数可以使用内建数组 ARGC 来访问，ARGV 的值是参数的个数 + 1
+awk -f progfile a v=1 b
+#+BEGIN_SRC awk 
+# seq - print sequences of integers
+#input: argumentsq,pq,orpqr; q>=p;r>0
+# output: integers 1 to q, p to q, or p to q in steps of r
+BEGIN {
+    if (ARGC == 2)
+        for (i = 1; i <= ARGV[1]; i++)
+            print i
+    else if (ARGC == 3)
+        for (i = ARGV[1]; i <= ARGV[2]; i++)
+            print i
+    else if (ARGC == 4)
+for (i = ARGV[1]; i <= ARGV[2]; i += ARGV[3])
+    print i
+}
+#命令
+awk -f seq 10
+awk -f seq 1 10
+awk -f seq 1 10 1
+
+#+END_SRC
+
+** 2.6 与其它程序交互
+主要针对  UNIX 
+*** system 
+#+BEGIN_SRC awk
+$1 == "#include" { gsub(/"/, "", $2); system("cat " $2); next }
+{ print }
+
+#+END_SRC
