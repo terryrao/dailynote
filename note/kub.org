@@ -1,0 +1,27 @@
+
+* 启动 kubeadm
+安装条件：
+-  需要两个及以上的核
+-  需要关闭 swap  
+#+BEGIN_SRC bash
+# centos 7 
+vim /usr/lib/systemd/system/kubelet.service.d/10-kubeadm.conf
+# add 
+Environment="KUBELET_EXTRA_ARGS=--fail-swap-on=false"
+# exit vim 
+systemctl daemon-reload
+
+#+END_SRC
+
+
+* cant not pull image
+找到对应的版本从国内拉取镜像
+#+BEGIN_SRC sh
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/kube-controller-manager:v1.14.3
+
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/kube-scheduler:v1.14.3
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/kube-proxy:v1.14.3
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/pause:3.1
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/etcd:3.3.10
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/coredns:1.3.1
+#+END_SRC
