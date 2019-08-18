@@ -136,6 +136,7 @@ test {
 1. test jmockit 相关单例时，无法通过。
 
 有两种情况 ：
+
 1） 当出现初始化异常则需要在 `build.gradle` 中加入以下代码：
 ```gradle
 test { 
@@ -155,6 +156,21 @@ repositories {
     }
 }
 ```
+3. 怎么在编译后执行自定义任务
+
+```gradle 
+	task myTask {
+		doLast {
+			println "mytask"
+		}
+	}
+	
+	build.finalizedBy(myTask)
+```
+
+4. 2019.2 月版本的 idea console 在提示编译错误的时候都是乱码，如何解决？
+
+如果在 setting ->  file encoding  里将 global encoding 和 project encoding 都设置为 utf-8 后还是不行，可以在 idea 对应启动项上的 `vm.options` 文件里加入 `-Dfile.encoding=UTF-8`
 
 
 
