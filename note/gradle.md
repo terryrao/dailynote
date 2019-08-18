@@ -135,16 +135,16 @@ test {
 ## 2. FAQ
 1. test jmockit 相关单例时，无法通过。
 
-有两种情况 ：
+有三种情况 ：
 
-1） 当出现初始化异常则需要在 `build.gradle` 中加入以下代码：
+1) 当出现初始化异常则需要在 `build.gradle` 中加入以下代码：
 ```gradle
 test { 
  	jvmArgs "-javaagent:${classpath.find { it.name.contains("jmockit") }.absolutePath}"
 }
 ```
-2)   如果上述代码加入后 ide 仍然报错，而命令行使用 `gradle build` 正常，则需要在 ide 的 `unitRunner` 模板里 vm options 添加 `-javaagent=/.../path/jmockit.jar` 参数。
-3)   如果上述步骤之后，启动正常但是报如 nullPointerException  之类的异常，如果在排除代码的异常之后，命令行没有问题 ，可以查看是一下启动 gradle 的 jdk 版本怎么项目的 jdk 版本是不是一致的
+2)如果上述代码加入后 ide 仍然报错，而命令行使用 `gradle build` 正常，则需要在 ide 的 `unitRunner` 模板里 vm options 添加 `-javaagent=/.../path/jmockit.jar` 参数。
+3) 如果上述步骤之后，启动正常但是报如 nullPointerException  之类的异常，如果在排除代码的异常之后，命令行没有问题 ，可以查看是一下启动 gradle 的 jdk 版本怎么项目的 jdk 版本是不是一致的
 
 2. 如果插件不是标准 maven 库和 gradle plugin 库中的插件，需要在当前 `build.gradle`所在目录里加入 `init.gradle` 文件，加入 repositories ：
 ```gradle
