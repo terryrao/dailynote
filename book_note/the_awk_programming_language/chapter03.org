@@ -1,0 +1,28 @@
+#+TITLE: 数据处理
+#+DATE: <2019-06-27 Thu>
+
+** 数据转换与归约
+Awk 最常用的一个功能是把数据从一种形式转换成另一种形式。
+*** 列求和
+#+BEGIN_SRC awk
+
+# sum1 - print column sums
+#   input:  rows of numbers
+#   output: sum of each column
+#     missing entries are treated as zeros
+{ for (i = 1; i <= NF; i++ ) 
+        sum[i] += $i
+
+  if (NF > maxfld) 
+        maxfld = NF
+}
+END {
+    for(i = 1; i <= maxfld; i++ ) {
+        printf("%g",sum[i])
+        if(i < maxfld) 
+            printf("\t")
+        else 
+            printf("\n")
+    }
+}
+#+END_SRC
