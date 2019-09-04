@@ -1,6 +1,10 @@
 # AXON 
 
-## 基本概念：
+## 1. CQRS  架构
+
+![CQRS 架构图](pic/axon_architecture-overview.png)
+
+## 2. 基本概念：
 
 ### CQRS
 
@@ -61,6 +65,100 @@ Event Handler 接收并处理事件。
 ### Event Store
 
 Event Store 提供机制，在底层 event storage 中开启流。
+
+## 3. 重要注解
+
+### 1） `@Aggragate`
+
+```java
+@Target({ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Component
+@Scope("prototype")
+@AggregateRoot
+public @interface Aggregate 
+```
+
+
+
+本质上是一个 spring 的 component 。`CommandGateWay` 调用命令时需要它。
+
+### 2） `@AggregateIdentifier`
+
+标识字段是实体的唯一标识
+
+
+
+### 3） `@CommandHandler`
+
+标注对象或者方法做为一个 `CommandHandler`  ，使用 `AnnotationCommandHandlerAdapter` 去订阅 `command bus`。
+
+### 4） `@AggregateMember`
+
+标注在 聚合根里的实体属性上，当聚合根触发一个事件时，首先触发聚合根的事件，然后传播到 `AggregateMember` 中。(When an entity (including the aggregate root) applies an event, it is handled by the aggregate root first, and then bubbles down through every `@AggregateMember` annotated field to **all** its containing child entities:)
+
+```java
+import org.axonframework.commandhandling.CommandHandler;
+import org.axonframework.modelling.command.AggregateIdentifier;
+import org.axonframework.modelling.command.AggregateMember;
+import org.axonframework.modelling.command.EntityId;
+
+import static org.axonframework.modelling.command.AggregateLifecycle.apply;
+
+public class GiftCard {
+
+    @AggregateIdentifier
+    private String id;
+    @AggregateMember
+    private List<GiftCardTransaction> transactions = new ArrayList<>();
+
+    @CommandHandler
+    public void handle(RedeemCardCommand cmd) {
+        // Some decision making logic
+        apply(new CardRedeemedEvent(id, cmd.getTransactionId(), cmd.getAmount()));
+    }
+
+    @EventSourcingHandler
+    public void on(CardRedeemedEvent evt) {
+        // 1.
+        transactions.add(new GiftCardTransaction(evt.getTransactionId(), evt.getAmount()));
+    } 
+
+    // omitted constructors, command and event sourcing handlers 
+}
+
+public class GiftCardTransaction {
+
+    @EntityId
+    private String transactionId;
+
+    private int transactionValue;
+    private boolean reimbursed = false;
+
+    public GiftCardTransaction(String transactionId, int transactionValue) {
+        this.transactionId = transactionId;
+        this.transactionValue = transactionValue;
+    }
+
+    @CommandHandler
+    public void handle(ReimburseCardCommand cmd) {
+        if (reimbursed) {
+            throw new IllegalStateException("Transaction already reimbursed");
+        }
+        apply(new CardReimbursedEvent(cmd.getCardId(), transactionId, transactionValue));
+    }
+
+    @EventSourcingHandler
+    public void on(CardReimbursedEvent event) {
+        // 2.
+        if (transactionId.equals(event.getTransactionId())) {
+            reimbursed = true;
+        }
+    }
+
+    // omitted getter and equals/hashCode
+}
+```
 
 
 
