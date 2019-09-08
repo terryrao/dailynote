@@ -8,7 +8,7 @@ QRS 是查询职责分离模式(Command Query Responsibility Segregation)的缩�
 
 ### EVENT SOURCING
 
-事件溯源：
+事件溯源：https://axoniq.io/resources/event-sourcing
 
 ### cmmand
 
