@@ -16,7 +16,9 @@ https://www.cnblogs.com/yangecnu/p/Introduction-CQRS.html
 
 确保对应用程序状态的所有更改动作都存储为一系列事件，这意味着我们不存储对象的状态，相反，我们存储影响其状态的所有事件（（banq注：状态类似存量，类似账户余额；事件类似流量，类似导致账户余额变动一系列转账事件））。然后，为了检索一个对象状态，我们必须读取与这个对象相关的不同事件，并逐一应用它们。（banq注：账户余额实时计算，不是直接读取某个数据库的字段）
 
-事件溯源：https://www.infoq.cn/article/2017/09/How-understand-event-traceabilit
+事件溯源：
+https://www.infoq.cn/article/2017/09/How-understand-event-traceabilit
+https://axoniq.io/resources/event-sourcing
 
 ### cmmand
 
