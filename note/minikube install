@@ -1,0 +1,35 @@
+# minikube 安装
+
+1. 预先安装 docker 
+
+2. 下载 minikube
+
+   ```bash
+   curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 \
+     && chmod +x minikube
+     
+     sudo install minikube /usr/local/bin
+    
+   ```
+
+3. 安装镜像
+
+   ```bash
+   
+   images=(kube-proxy:v1.15.2 kube-scheduler-amd64:v1.15.2 kube-controller-manager-amd64:v1.15.2 kube-apiserver:v1.15.2 etcd:3.3.10 pause:3.1)
+   for imageName in ${images[@]} ; do
+     docker pull mirrorgooglecontainers/$imageName  
+     docker tag mirrorgooglecontainers/$imageName k8s.gcr.io/$imageName  
+     docker rmi mirrorgooglecontainers/$imageName
+   done
+     
+   
+   ```
+
+4. 启动 minikube
+
+   ```bash
+   minikube start --vm-driver=none --image-mirror-country=cn --image-repository=registry.cn-hangzhou.aliyuncs.com/google_contai
+   ```
+
+   
